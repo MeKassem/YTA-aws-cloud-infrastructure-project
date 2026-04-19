@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Dashboard</title>
+
+<style>
+*{
+box-sizing:border-box;
+font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+margin:0;
+background:#f5f7fb;
+display:flex;
+justify-content:center;
+align-items:flex-start;
+min-height:100vh;
+padding:40px;
+}
+
+.dashboard{
+width:100%;
+max-width:700px;
+background:white;
+padding:30px;
+border-radius:10px;
+box-shadow:0 10px 25px rgba(0,0,0,0.1);
+}
+
+h1{
+margin-top:0;
+text-align:center;
+}
+
+.task-input{
+display:flex;
+gap:10px;
+margin-bottom:20px;
+}
+
+.task-input input{
+flex:1;
+padding:10px;
+border-radius:6px;
+border:1px solid #ccc;
+font-size:16px;
+}
+
+.task-input button{
+padding:10px 16px;
+border:none;
+background:#4CAF50;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+.task-input button:hover{
+background:#45a049;
+}
+
+.filters{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:15px;
+flex-wrap:wrap;
+gap:10px;
+}
+
+.filter-buttons button{
+padding:6px 12px;
+border:none;
+background:#e0e0e0;
+border-radius:6px;
+cursor:pointer;
+}
+
+.filter-buttons button.active{
+background:#4CAF50;
+color:white;
+}
+
+ul{
+list-style:none;
+padding:0;
+margin:0;
+}
+
+li{
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:10px;
+border-bottom:1px solid #eee;
+}
+
+li.completed span{
+text-decoration:line-through;
+color:gray;
+}
+
+.task-left{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.delete-btn{
+background:#ff4d4d;
+border:none;
+color:white;
+padding:5px 10px;
+border-radius:5px;
+cursor:pointer;
+}
+
+.delete-btn:hover{
+background:#e60000;
+}
+
+footer{
+margin-top:15px;
+text-align:center;
+font-size:14px;
+color:#777;
+}
+</style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+<h1>Task Dashboard</h1>
+
+<div class="task-input">
+<input id="taskInput" type="text" placeholder="Add a new task...">
+<button onclick="addTask()">Add</button>
+</div>
+
+<div class="filters">
+
+<div id="taskCounter">0 tasks</div>
+
+<div class="filter-buttons">
+<button onclick="setFilter('all')" class="active">All</button>
+<button onclick="setFilter('active')">Active</button>
+<button onclick="setFilter('completed')">Completed</button>
+</div>
+
+</div>
+
+<ul id="taskList"></ul>
+
+<footer>
+Tasks are saved locally in your browser
+</footer>
+
+</div>
+
+<script>
+
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let filter = "all";
+
+function saveTasks(){
+localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function addTask(){
+const input = document.getElementById("taskInput");
+const text = input.value.trim();
+
+if(text === "") return;
+
+tasks.push({
+id: Date.now(),
+text: text,
+completed:false
+});
+
+input.value="";
+saveTasks();
+render();
+}
+
+function toggleTask(id){
+tasks = tasks.map(task =>
+task.id === id ? {...task, completed: !task.completed} : task
+);
+saveTasks();
+render();
+}
+
+function deleteTask(id){
+tasks = tasks.filter(task => task.id !== id);
+saveTasks();
+render();
+}
+
+function setFilter(f){
+filter = f;
+
+document.querySelectorAll(".filter-buttons button").forEach(btn=>{
+btn.classList.remove("active");
+});
+
+event.target.classList.add("active");
+
+render();
+}
+
+function render(){
+
+const list = document.getElementById("taskList");
+list.innerHTML="";
+
+let filteredTasks = tasks.filter(task=>{
+if(filter==="active") return !task.completed;
+if(filter==="completed") return task.completed;
+return true;
+});
+
+filteredTasks.forEach(task=>{
+
+const li = document.createElement("li");
+
+if(task.completed) li.classList.add("completed");
+
+li.innerHTML = `
+<div class="task-left">
+<input type="checkbox" ${task.completed ? "checked" : ""} onclick="toggleTask(${task.id})">
+<span>${task.text}</span>
+</div>
+<button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
+`;
+
+list.appendChild(li);
+
+});
+
+document.getElementById("taskCounter").innerText =
+tasks.length + (tasks.length === 1 ? " task" : " tasks");
+}
+
+document.getElementById("taskInput").addEventListener("keypress", function(e){
+if(e.key === "Enter") addTask();
+});
+
+render();
+
+</script>
+
+</body>
+</html>
